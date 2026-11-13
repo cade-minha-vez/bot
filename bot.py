@@ -91,8 +91,23 @@ async def receive_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def reject_other(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.effective_message.reply_text('Este bot recebe apenas tipo de atendimento e horário. Use /start para começar.')
 
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from threading import Thread
 
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'Bot ativo')
+
+
+def start_http_server():
+    port = int(os.environ.get('PORT', 10000))
+    server = HTTPServer(('0.0.0.0', port), HealthHandler)
+    server.serve_forever()
 def main():
+    Thread(target=start_http_server, daemon=True).start()
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CallbackQueryHandler(select_category, pattern=r'^type:(dispensacao|renovacao|outros)$'))
